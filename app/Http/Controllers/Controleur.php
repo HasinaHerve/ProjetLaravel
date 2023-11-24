@@ -12,30 +12,53 @@ class Controleur extends Controller
     //Ajouter un actualité
     public function ajouterActualite(Request $request)
     {
-        $data = $request->validate([
-            'titre' => 'required',
-            'descriptionActualite' => 'required',
+        //Récupérer les données du tableau envoyées depuis React
+        $request->validate([
+            'titre' => 'required|string',
+            'descriptionActualite' => 'required|string',
             'dateEvenement' => 'required',
-            'photosActualite' => 'required',
+            'fichier' => 'required|file|mimes:jpeg,png',
         ]);
+        // Enregistrement du fichier dans un répertoire dédié (par exemple, storage/app/fichiers)
+        $path = $request->file('fichier')->store('images', 'public');
 
-        $actualite = Actualite::create($data);
+        // Stockez l'image dans le dossier de stockage Laravel
+        $actualite = new Actualite([
+            'titre' => $request->input('titre'),
+            'descriptionActualite' => $request->input('descriptionActualite'),
+            'dateEvenement' => $request->input('dateEvenement'),
+            'photosActualite' => $path,
+        ]);
+        $actualite->save();
         return response()->json($actualite, 201);
     }
     //Modifier une actualité
     public function modifierActualite(Request $request, $id)
     {
-        $data = $request->validate([
-            'titre' => 'required',
-            'descriptionActualite' => 'required',
+        $request->validate([
+            'titre' => 'required|string',
+            'descriptionActualite' => 'required|string',
             'dateEvenement' => 'required',
-            'photosActualite' => 'required',
+            'fichier' => 'required|file|mimes:jpeg,png',
         ]);
+        // Enregistrement du fichier dans un répertoire dédié (par exemple, storage/app/fichiers)
+        $path = $request->file('fichier')->store('images', 'public');
+
+        // Récupérer l'instance d'Actualite existante
         $actualite = Actualite::findOrFail($id);
-        $actualite->update($data);
+
+        // Mettre à jour les propriétés individuelles de l'instance
+        $actualite->titre = $request->input('titre');
+        $actualite->descriptionActualite = $request->input('descriptionActualite');
+        $actualite->dateEvenement = $request->input('dateEvenement');
+        $actualite->photosActualite = $path;
+
+        // Sauvegarder les modifications
+        $actualite->save();
 
         return response()->json($actualite, 200);
     }
+
     //Supprimer une actualité
     public function supprimerActualite($id)
     {
@@ -49,19 +72,46 @@ class Controleur extends Controller
     {
         return Actualite::all();
     }
+    //Afficher une actualitée par son id
+    public function afficherActualiteId($id)
+    {
+        $actualite = Actualite::find($id);
+        if($actualite){
+            return response()->json([
+                'status' => 200,
+                'actualite' => $actualite
+            ], 200);
+        }
+        else{
+            return response()->json([
+                'status' => 404,
+                'message' => "Aucun actualité trouvé"
+            ], 404);
+        }
+    }
 
 
     //Ajouter un portfolio
     public function ajouterPortfolio(Request $request)
     {
-        $data = $request->validate([
-            'nomEntreprise' => 'required',
-            'descriptionPortfolio' => 'required',
-            'photosPortfolio' => 'required',
+        //Récupérer les données du tableau envoyées depuis React
+        $request->validate([
+            'nomEntreprise' => 'required|string',
+            'descriptionPortfolio' => 'required|string',
             'lien' => 'required',
+            'fichier' => 'required|file|mimes:jpeg,png',
         ]);
+        // Enregistrement du fichier dans un répertoire dédié (par exemple, storage/app/fichiers)
+        $path = $request->file('fichier')->store('images', 'public');
 
-        $portfolio = Portfolio::create($data);
+        // Stockez l'image dans le dossier de stockage Laravel
+        $portfolio = new Portfolio([
+            'nomEntreprise' => $request->input('nomEntreprise'),
+            'descriptionPortfolio' => $request->input('descriptionPortfolio'),
+            'lien' => $request->input('lien'),
+            'photosPortfolio' => $path,
+        ]);
+        $portfolio->save();
         return response()->json($portfolio, 201);
     }
     //Modifier une portfolio
@@ -92,19 +142,46 @@ class Controleur extends Controller
     {
         return Portfolio::all();
     }
+    //Afficher une portfolio par son id
+    public function afficherPortfolioId($id)
+    {
+        $portfolio = Portfolio::find($id);
+        if($portfolio){
+            return response()->json([
+                'status' => 200,
+                'portfolio' => $portfolio
+            ], 200);
+        }
+        else{
+            return response()->json([
+                'status' => 404,
+                'message' => "Aucun portfolio trouvé"
+            ], 404);
+        }
+    }
 
 
     //Ajouter un personnel
     public function ajouterPersonnel(Request $request)
     {
-        $data = $request->validate([
-            'nom' => 'required',
-            'prenoms' => 'required',
-            'photoPersonnel' => 'required',
+        //Récupérer les données du tableau envoyées depuis React
+        $request->validate([
+            'nom' => 'required|string',
+            'prenoms' => 'required|string',
             'poste' => 'required',
+            'fichier' => 'required|file|mimes:jpeg,png',
         ]);
+        // Enregistrement du fichier dans un répertoire dédié (par exemple, storage/app/fichiers)
+        $path = $request->file('fichier')->store('images', 'public');
 
-        $personnel = Personnel::create($data);
+        // Stockez l'image dans le dossier de stockage Laravel
+        $personnel = new Personnel([
+            'nom' => $request->input('nom'),
+            'prenoms' => $request->input('prenoms'),
+            'poste' => $request->input('poste'),
+            'photoPersonnel' => $path,
+        ]);
+        $personnel->save();
         return response()->json($personnel, 201);
     }
     //Modifier une personnel
@@ -134,5 +211,22 @@ class Controleur extends Controller
     public function afficherPersonnel()
     {
         return Personnel::all();
+    }
+    //Afficher une portfolio par son id
+    public function afficherPersonnelId($id)
+    {
+        $personnel = Personnel::find($id);
+        if($personnel){
+            return response()->json([
+                'status' => 200,
+                'personnel' => $personnel
+            ], 200);
+        }
+        else{
+            return response()->json([
+                'status' => 404,
+                'message' => "Aucun personnel trouvé"
+            ], 404);
+        }
     }
 }
