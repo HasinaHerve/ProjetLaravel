@@ -212,4 +212,9 @@ return [
         // 'ExampleClass' => App\Example\ExampleClass::class,
     ])->toArray(),
 
+    'cors' => [
+        'allowedOrigins' => ['http://localhost:3000'],
+        'allowedHeaders' => ['Content-Type', 'Authorization'],
+        'allowedMethods' => ['GET', 'POST', 'PUT', 'DELETE'],
+    ],
 ];
