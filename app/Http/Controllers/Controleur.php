@@ -5,7 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Actualite;
 use App\Models\Portfolio;
 use App\Models\Personnel;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth;
+use Storage;
 
 class Controleur extends Controller
 {
@@ -17,7 +21,7 @@ class Controleur extends Controller
             'titre' => 'required|string',
             'descriptionActualite' => 'required|string',
             'dateEvenement' => 'required',
-            'fichier' => 'required|file|mimes:jpeg,png',
+            'fichier' => 'required|image|mimes:jpeg,png',
         ]);
         // Enregistrement du fichier dans un répertoire dédié (par exemple, storage/app/fichiers)
         $path = $request->file('fichier')->store('images', 'public');
@@ -33,20 +37,21 @@ class Controleur extends Controller
         return response()->json($actualite, 201);
     }
     //Modifier une actualité
-    public function modifierActualite(Request $request, $id)
+    public function modifierActualite(Request $request)
     {
-        $request->validate([
+        //Récupérer les données du tableau envoyées depuis React
+        $validation= $request->validate([
             'titre' => 'required|string',
             'descriptionActualite' => 'required|string',
             'dateEvenement' => 'required',
-            'fichier' => 'required|file|mimes:jpeg,png',
+            'fichier' => 'required|image|mimes:jpeg,png',
         ]);
-        // Enregistrement du fichier dans un répertoire dédié (par exemple, storage/app/fichiers)
+        // Enregistrement du fichier dans un répertoire dédié
         $path = $request->file('fichier')->store('images', 'public');
-
         // Récupérer l'instance d'Actualite existante
-        $actualite = Actualite::findOrFail($id);
-
+        $actualite = Actualite::findOrFail($request->input('id'));
+        //Suppréssion de l'image
+        Storage::delete('public/'.$actualite->photosActualite);
         // Mettre à jour les propriétés individuelles de l'instance
         $actualite->titre = $request->input('titre');
         $actualite->descriptionActualite = $request->input('descriptionActualite');
@@ -63,8 +68,9 @@ class Controleur extends Controller
     public function supprimerActualite($id)
     {
         $actualite = Actualite::findOrFail($id);
+        //Suppréssion de l'image
+        Storage::delete('public/'.$actualite->photosActualite);
         $actualite->delete();
-
         return response()->json($actualite, 204);
     }
     //Afficher les actualités
@@ -101,7 +107,7 @@ class Controleur extends Controller
             'lien' => 'required',
             'fichier' => 'required|file|mimes:jpeg,png',
         ]);
-        // Enregistrement du fichier dans un répertoire dédié (par exemple, storage/app/fichiers)
+        // Enregistrement du fichier dans un répertoire dédié
         $path = $request->file('fichier')->store('images', 'public');
 
         // Stockez l'image dans le dossier de stockage Laravel
@@ -115,17 +121,29 @@ class Controleur extends Controller
         return response()->json($portfolio, 201);
     }
     //Modifier une portfolio
-    public function modifierPortfolio(Request $request, $id)
+    public function modifierPortfolio(Request $request)
     {
-        $data = $request->validate([
+        //Récupérer les données du tableau envoyées depuis React
+        $validation= $request->validate([
             'nomEntreprise' => 'required',
             'descriptionPortfolio' => 'required',
-            'photosPortfolio' => 'required',
+            'fichier' => 'required|file|mimes:jpeg,png',
             'lien' => 'required',
         ]);
+        // Enregistrement du fichier dans un répertoire dédié
+        $path = $request->file('fichier')->store('images', 'public');
+        // Récupérer l'instance de portfolio existant
+        $portfolio = Portfolio::findOrFail($request->input('id'));
+        //Suppréssion de l'image
+        Storage::delete('public/'.$portfolio->photosPortfolio);
+        // Mettre à jour les propriétés individuelles de l'instance
+        $portfolio->nomEntreprise = $request->input('nomEntreprise');
+        $portfolio->descriptionPortfolio = $request->input('descriptionPortfolio');
+        $portfolio->lien = $request->input('lien');
+        $portfolio->photosPortfolio = $path;
 
-        $portfolio = Portfolio::findOrFail($id);
-        $portfolio->update($data);
+        // Sauvegarder les modifications
+        $portfolio->save();
 
         return response()->json($portfolio, 200);
     }
@@ -133,6 +151,10 @@ class Controleur extends Controller
     public function supprimerPortfolio($id)
     {
         $portfolio = Portfolio::findOrFail($id);
+
+        //Suppréssion de l'image
+        //Storage::delete('public/'.$actualite->photosPortfolio);
+
         $portfolio->delete();
 
         return response()->json($portfolio, 204);
@@ -185,17 +207,39 @@ class Controleur extends Controller
         return response()->json($personnel, 201);
     }
     //Modifier une personnel
-    public function modifierPersonnel(Request $request, $id)
+    public function modifierPersonnel(Request $request)
     {
         $data = $request->validate([
             'nom' => 'required',
             'prenoms' => 'required',
-            'photoPersonnel' => 'required',
+            'fichier' => 'required|file|mimes:jpeg,png',
             'poste' => 'required',
         ]);
 
-        $personnel = Personnel::findOrFail($id);
+        $personnel = Personnel::findOrFail($request->input('id'));
         $personnel->update($data);
+
+        //Récupérer les données du tableau envoyées depuis React
+        $validation= $request->validate([
+            'nom' => 'required',
+            'prenoms' => 'required',
+            'fichier' => 'required|file|mimes:jpeg,png',
+            'poste' => 'required',
+        ]);
+        // Enregistrement du fichier dans un répertoire dédié
+        $path = $request->file('fichier')->store('images', 'public');
+        // Récupérer l'instance de personnel existant
+        $personnel = Personnel::findOrFail($request->input('id'));
+        //Suppréssion de l'image
+        Storage::delete('public/'.$personnel->photoPersonnel);
+        // Mettre à jour les propriétés individuelles de l'instance
+        $personnel->nom = $request->input('nom');
+        $personnel->prenoms = $request->input('prenoms');
+        $personnel->poste = $request->input('poste');
+        $personnel->photoPersonnel = $path;
+
+        // Sauvegarder les modifications
+        $personnel->save();
 
         return response()->json($personnel, 200);
     }
@@ -203,6 +247,7 @@ class Controleur extends Controller
     public function supprimerPersonnel($id)
     {
         $personnel = Personnel::findOrFail($id);
+        Storage::delete('public/'.$personnel->photoPersonnel);
         $personnel->delete();
 
         return response()->json($personnel, 204);
@@ -228,5 +273,37 @@ class Controleur extends Controller
                 'message' => "Aucun personnel trouvé"
             ], 404);
         }
+    }
+
+
+    public function login(Request $request)
+    {
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            return response()->json(['user' => $user]);
+        }
+        else{
+            return response()->json(['message' => 'Invalid credentials'], 401);
+        }
+
+        
+    }
+    public function ajouterCompte(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|string|min:6',
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        return response()->json(['user' => $user]);
     }
 }
